@@ -1,0 +1,80 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+    networks:
+      - backend
+
+  bookapi:
+    build: ./bookapi
+    depends_on:
+      - mongo
+    ports:
+      - "5001:8000"
+    expose:
+      - 8000
+    volumes:
+      - type: bind
+        source: ./bookapi
+        target: /app
+    restart: always
+    networks:
+      - backend
+
+  loansapi1:
+    build: ./loansapi
+    depends_on:
+      - mongo
+      - bookapi
+    ports:
+      - "5002:8001"
+    expose:
+      - 8001
+    volumes:
+      - type: bind
+        source: ./loansapi
+        target: /app
+    restart: always
+    networks:
+      - backend
+
+  loansapi2:
+    build: ./loansapi
+    depends_on:
+      - mongo
+      - bookapi
+    ports:
+      - "5003:8001"
+    expose:
+      - 8001
+    volumes:
+      - type: bind
+        source: ./loansapi
+        target: /app
+    restart: always
+    networks:
+      - backend
+
+  nginx:
+    build: ./reverse
+    ports:
+      - "80:80"
+    depends_on:
+      - loansapi1
+      - loansapi2
+      - bookapi
+    restart: always
+    networks:
+      - backend
+
+volumes:
+  mongo_data:
+
+networks:
+  backend:
+    driver: bridge
