@@ -2,6 +2,8 @@ from flask import Flask, request
 from flask_restful import Resource, Api
 import requests
 import LoansCollection
+from bson.objectid import ObjectId
+
 
 loanCol = LoansCollection.LoansCollection()
 
@@ -26,11 +28,17 @@ class Loans(Resource):
 
         try:
             response = requests.get(f'{BOOKS_SERVICE_URL}?ISBN={ISBN}')
-            if response.status_code != 200:
-                return {"error": "Unprocessable Content"}, 422
-            book_data = response.json()[0]
-        except requests.exceptions.RequestException:
-            return {"error": "Internal Server Error: Unable to connect to Books Service"}, 500
+            if response.status_code == 404: 
+                return {"error": "Book not found"}, 422
+            elif response.status_code != 200:
+                return {"error": "Books Service unavailable"}, 422
+            if not response.json():
+                return {"error": "Book not found"}, 422
+            book_data = response.json()[0]  
+            if book_data == []: 
+                return {"error": "Book not found"}, 422
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Internal Server Error: Unable to connect to Books Service - {str(e)}"}, 500
 
         existing_loans = loanCol.retrieveLoansByParameter({"ISBN": ISBN})
         if existing_loans:
@@ -73,7 +81,7 @@ class LoanId(Resource):
             return {"error": "Not Found"}, 404
     
     def delete(self, loan_id):
-        success = loanCol.deleteLoan(int(loan_id))
+        success = loanCol.deleteLoan((loan_id))
         if success:
             return {"loanID": loan_id}, 200
         else:
@@ -84,5 +92,5 @@ api = Api(app)
 
 if __name__ == "__main__":
     api.add_resource(Loans, '/loans')
-    api.add_resource(LoanId, '/loan/<string:loan_id>')
+    api.add_resource(LoanId, '/loans/<string:loan_id>')
     app.run(host='0.0.0.0', port=8001, debug=True)

@@ -121,11 +121,12 @@ class Ratings(Resource):
     """
     def get(self):
         args = request.args
-        print(args)
         if args == {}:
             return ratingsCol.retrieveAllRatings(), 200
         elif "id" in args.keys():
-            return ratingsCol.retrieveRatingsByParameter("id", args["id"]), 200
+            success, rating = ratingsCol.findRating(args["id"])
+            if success:
+                return rating, 200
         else:
             return {"error" : "Unprocessable Content"}, 422
 

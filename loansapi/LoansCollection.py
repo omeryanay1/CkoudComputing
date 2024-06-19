@@ -59,8 +59,8 @@ class LoansCollection:
         """
         loan = self.collection.find_one({"_id": ObjectId(loanID)})
         if loan:
-            loan["loanID"] = str(loan["_id"])  # Convert ObjectId to string
-            del loan["_id"]  # Remove the original ObjectId field
+            loan["loanID"] = str(loan["_id"]) 
+            del loan["_id"]  
             return True, loan
         else:
             return False, None
@@ -74,8 +74,8 @@ class LoansCollection:
         """
         loans = list(self.collection.find())
         for loan in loans:
-            loan["loanID"] = str(loan["_id"])  # Convert ObjectId to string
-            del loan["_id"]  # Remove the original ObjectId field
+            loan["loanID"] = str(loan["_id"])
+            del loan["_id"]
         return loans
 
     def retrieveLoansByParameter(self, args):
@@ -91,6 +91,6 @@ class LoansCollection:
         query = {key: value for key, value in args.items()}
         loans = list(self.collection.find(query))
         for loan in loans:
-            loan["loanID"] = str(loan["_id"])  # Convert ObjectId to string
-            del loan["_id"]  # Remove the original ObjectId field
+            loan["loanID"] = str(loan["_id"])
+            del loan["_id"]
         return loans

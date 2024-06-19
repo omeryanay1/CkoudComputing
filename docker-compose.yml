@@ -4,8 +4,6 @@ services:
     image: mongo
     ports:
       - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
     restart: always
     networks:
       - backend
@@ -18,10 +16,6 @@ services:
       - "5001:8000"
     expose:
       - 8000
-    volumes:
-      - type: bind
-        source: ./bookapi
-        target: /app
     restart: always
     networks:
       - backend
@@ -35,10 +29,6 @@ services:
       - "5002:8001"
     expose:
       - 8001
-    volumes:
-      - type: bind
-        source: ./loansapi
-        target: /app
     restart: always
     networks:
       - backend
@@ -52,10 +42,6 @@ services:
       - "5003:8001"
     expose:
       - 8001
-    volumes:
-      - type: bind
-        source: ./loansapi
-        target: /app
     restart: always
     networks:
       - backend
@@ -71,9 +57,6 @@ services:
     restart: always
     networks:
       - backend
-
-volumes:
-  mongo_data:
 
 networks:
   backend:

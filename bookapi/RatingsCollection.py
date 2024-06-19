@@ -121,24 +121,6 @@ class RatingsCollection:
             rating["id"] = str(rating["_id"])
             del rating["_id"]
         return ratings
-    
-    def retrieveRatingsByParameter(self, field, parameter):
-        """
-        Retrieves a rating from the collection based on a specified field and parameter.
-
-        Args:
-            field (str): The field name to search by (e.g., "title").
-            parameter (str): The value to search for in the chosen field.
-
-        Returns:
-            list: A list of ratings matching the given parameter.
-        """
-        query = {field: parameter}
-        ratings = list(self.collection.find(query))
-        for rating in ratings:
-            rating["id"] = str(rating["_id"])
-            del rating["_id"]
-        return ratings
         
     def retrieveTop(self):
         """
@@ -147,12 +129,38 @@ class RatingsCollection:
         Returns:
             list: A list of ratings with the top 3 averages in descending order.
         """
-        pipeline = [
-            {"$addFields": {"average": {"$avg": "$values"}}},
-            {"$sort": {"average": -1}},
-            {"$limit": 3}
+        pipeLine = [
+            {"$match": {"$expr": {"$gte": [{"$size": "$values"}, 3]}}},  
+            {"$sort": {"average": pymongo.DESCENDING}}, 
+            {"$limit": 3},  
+            {"$group": { 
+                "_id": None,
+                "thirdHighestAvg": {"$min": "$average"}
+            }},
+            {"$addFields": {  
+                "minAvg": "$thirdHighestAvg"
+            }},
+            {"$lookup": {  
+                "from": "ratings",  
+                "let": {"minAvg": "$minAvg"},
+                "pipeline": [
+                    {"$match": {
+                        "$expr": {
+                            "$and": [
+                                {"$gte": ["$average", "$$minAvg"]},
+                                {"$gte": [{"$size": "$values"}, 3]}
+                            ]
+                        }
+                    }}
+                ],
+                "as": "eligibleRatings"
+            }},
+            {"$unwind": "$eligibleRatings"},
+            {"$replaceRoot": {"newRoot": "$eligibleRatings"}}
         ]
-        top_ratings = list(self.collection.aggregate(pipeline))
+                    
+        top_ratings = list(self.collection.aggregate(pipeLine))
+
         for rating in top_ratings:
             rating["id"] = str(rating["_id"])
             del rating["_id"]
